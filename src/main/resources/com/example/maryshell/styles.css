@@ -1,0 +1,13 @@
+.main-root{
+    -fx-background: black;
+    -fx-background-color: black;
+}
+.label-text{
+    -fx-font-size: 14px;
+    -fx-background-color: black;
+    -fx-font-family: "Consolas", "Monospaced", monospace;
+    -fx-font-weight: bold;
+    -fx-padding: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
