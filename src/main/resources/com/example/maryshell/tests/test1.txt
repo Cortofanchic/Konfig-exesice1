@@ -1,0 +1,7 @@
+  cd 1 2
+cd "12" "Maria" "CDO"
+  ls
+ls 23 45
+ls 12
+  ls "Fine" "Figma"
+exit
