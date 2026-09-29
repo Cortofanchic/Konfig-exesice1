@@ -22,6 +22,10 @@ public class Output {
     private final Label label;
     private final ScrollPane scrollPane;
 
+    public static String getShellStart() {
+        return SHELL_START;
+    }
+
     public Output(Label newlabel, ScrollPane newScrollPane, Map<String, RunModule<List<String>>> commands) {
         label = newlabel;
         scrollPane = newScrollPane;
