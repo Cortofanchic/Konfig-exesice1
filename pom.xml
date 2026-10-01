@@ -54,7 +54,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <mainClass>com.example.maryshell/com.example.maryshell.Shell</mainClass>
+                    <mainClass>com.example.maryshell/com.example.maryshell.launch.Shell</mainClass>
                     <launcher>app</launcher>
                     <jlinkZipName>app</jlinkZipName>
                     <jlinkImageName>app</jlinkImageName>

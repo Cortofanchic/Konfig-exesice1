@@ -4,7 +4,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <ScrollPane fx:id="scrollPane" xmlns:fx="http://javafx.com/fxml" fitToWidth="true"
-            fx:controller="com.example.maryshell.Controller" stylesheets="@styles.css" styleClass="main-root">
+            fx:controller="com.example.maryshell.launch.Controller" stylesheets="@styles.css" styleClass="main-root">
 
     <Label styleClass="label-text" fx:id="labelText" wrapText="true"/>
 </ScrollPane>

@@ -1,4 +1,4 @@
-package com.example.maryshell;
+package com.example.maryshell.functionality;
 
 import java.util.function.Consumer;
 

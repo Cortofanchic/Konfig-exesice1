@@ -1,9 +1,10 @@
-package com.example.maryshell.tests;
+package com.example.maryshell.build;
 
-import com.example.maryshell.Shell;
+import com.example.maryshell.launch.Shell;
 import javafx.application.Application;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -13,14 +14,17 @@ import java.util.List;
 public class Test {
     private static List<String> readResource(String path) throws Exception {
         File file = new File(path);
-        if (file.isFile()) {
+        System.out.println(path);
+
+        if (file.exists()) {
             try{
                 return Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
-            } catch (Exception e){
-                throw new Exception(String.format("Error: script in  path \"%s\" not found", path));
+            } catch (IOException e) {
+                throw new Exception(String.format("Error: can't read test script in  path \"%s\"", path));
             }
+        } else {
+            throw new Exception(String.format("Error: can't open test script in  path \"%s\"", path));
         }
-        return List.of();
     }
 
     public static void main(String[] args) {
@@ -39,6 +43,7 @@ public class Test {
             } else {
                 testDirArgs.add(arg);
             }
+            System.out.println(arg);
         }
 
         if (!testDirArgs.isEmpty()){
@@ -67,7 +72,7 @@ public class Test {
 
             for (String testFile : testFiles) {
                 try {
-                    commandLinesList.add(String.join(JOIN_ARGS_SEP, readResource(testFile)));
+                    commandLinesList.add(String.join(JOIN_ARGS_SEP, readResource(String.format("%s/%s", defaultTestDirPath, testFile))));
                 } catch (Exception exception){
                     shellArgs.add(exception.getMessage() + ENTER);
                 }

@@ -1,5 +1,6 @@
-package com.example.maryshell;
+package com.example.maryshell.launch;
 
+import com.example.maryshell.ui.Output;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -13,6 +14,7 @@ import javafx.util.Duration;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -23,6 +25,7 @@ import static java.util.Arrays.stream;
 public class Shell extends Application {
     private Controller controller;
     private String vfsPath = "MaryShell";
+    private String startScriptPath;
     private static final String NEW_LINE_SEP = "\n";
     private static final String ENTER = "\r";
     private static final String VFS_TEG = "VFS=";
@@ -33,14 +36,34 @@ public class Shell extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("view.fxml"));
-        Parent root = loader.load();
+        URL url = getClass().getResource("/com/example/maryshell/view.fxml");
+        if (url == null){
+            throw new IOException("UI file is null.");
+        }
+        FXMLLoader loader = new FXMLLoader(url);
 
-        // Получаем контроллер и передаём ему сцену
+        // фабрика контроллеров
+        loader.setControllerFactory(controllerClass -> {
+            if (controllerClass == Controller.class) {
+                return new Controller(this);
+            } else {
+                throw new RuntimeException(
+                        "Controller init error " + controllerClass);
+            }
+        });
+
+        Parent root = loader.load();
         controller = loader.getController();
 
         int SCENE_WIDTH = 500;
         int SCENE_HEIGHT = 300;
+
+        if (controller == null) {
+            throw new IllegalStateException("Controller is null");
+        }
+
+        Output output = controller.getOutput();
+        output.start();
 
         Scene scene = new Scene(root, SCENE_WIDTH, SCENE_HEIGHT); // создание сцены приложения
         controller.setScene(scene);
@@ -50,6 +73,14 @@ public class Shell extends Application {
         stage.show(); // вывод окна
 
         readArgs();
+    }
+
+    public String getVfsPath() {
+        return vfsPath == null ? "\"\"" : vfsPath;
+    }
+
+    public String getStartScriptPath() {
+        return startScriptPath == null ? "\"\"" : startScriptPath;
     }
 
     private void readArgs(){
@@ -64,7 +95,8 @@ public class Shell extends Application {
                 } else if (arg.startsWith(VFS_TEG)){
                     vfsPath = arg.substring(VFS_TEG.length());
                 } else if (arg.startsWith(SCRIPT_TEG)){
-                    List<String> textFromPath = readFileLines(arg.substring(SCRIPT_TEG.length()));
+                    startScriptPath = arg.substring(SCRIPT_TEG.length());
+                    List<String> textFromPath = readFileLines(startScriptPath);
                     String clearScriptText = cleanStringFromComments(String.join(NEW_LINE_SEP, textFromPath));
                     scripts.add(clearScriptText);
                 } else {
@@ -72,6 +104,8 @@ public class Shell extends Application {
                     scripts.add(clearScriptText);
                 }
             }
+            System.out.println(startScriptPath);
+            System.out.println(vfsPath);
 
             runScript(stream(String.join(NEW_LINE_SEP, scripts).split(NEW_LINE_SEP)).toList());
         }
@@ -88,12 +122,15 @@ public class Shell extends Application {
 
     private List<String> readFileLines(String path){
         File file = new File(path);
-        if (file.isFile()) {
+
+        if (file.exists()) {
             try{
                 return Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
-            } catch (Exception e){
-                controller.getOutput().printExtra("Error: start script path is not found" + ENTER + Output.getShellStart());
+            } catch (IOException e) {
+                controller.getOutput().printExtra("Error: can't read start script" + ENTER + Output.getShellStart());
             }
+        } else {
+            controller.getOutput().printExtra("Error: can't open start script path" + ENTER + Output.getShellStart());
         }
         return List.of();
     }
