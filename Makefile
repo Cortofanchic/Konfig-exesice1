@@ -1,8 +1,8 @@
-APP_MAIN   = com.example.maryshell/com.example.maryshell.Shell
-TEST_MAIN  = com.example.maryshell.tests.Test
+BUILD_MAIN  =   com.example.maryshell.build.Build
+TEST_MAIN   =   com.example.maryshell.build.Test
 
 # Параметры
-VFS    ?=
+VFS ?=
 SCRIPT ?=
 TARGET := $(filter-out app test build clean help all, $(MAKECMDGOALS))
 
@@ -18,7 +18,10 @@ all: help
 
 app:
 	@echo Application $(APP_ARGS)
-	mvn -q clean javafx:run -Djavafx.args="$(APP_ARGS)"
+	mvn -q clean compile
+	mvn -q exec:java \
+		-Dexec.mainClass="$(BUILD_MAIN)" \
+		-Dexec.args="$(APP_ARGS)"
 
 test:
 	@echo Test $(TEST_CMD_ARGS)

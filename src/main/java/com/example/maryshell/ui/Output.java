@@ -1,5 +1,7 @@
-package com.example.maryshell;
+package com.example.maryshell.ui;
 
+import com.example.maryshell.functionality.RunModule;
+import com.example.maryshell.launch.Shell;
 import javafx.application.Platform;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.KeyEvent;
@@ -21,15 +23,17 @@ public class Output {
     private final Map<String, RunModule<List<String>>> commands;
     private final Label label;
     private final ScrollPane scrollPane;
+    private final Shell shellModule;
 
     public static String getShellStart() {
         return SHELL_START;
     }
 
-    public Output(Label newlabel, ScrollPane newScrollPane, Map<String, RunModule<List<String>>> commands) {
+    public Output(Label newlabel, ScrollPane newScrollPane, Map<String, RunModule<List<String>>> commands, Shell shell) {
         label = newlabel;
         scrollPane = newScrollPane;
         this.commands = commands;
+        shellModule = shell;
 
         label.heightProperty().addListener((obs, n1, n2) -> {
             scrollToBottom();
@@ -49,6 +53,10 @@ public class Output {
         String strippedLastString = stripLeft(lastString); //строка без передних пробелов
         int lastIndex = strippedLastString.contains(SPACE) ? strippedLastString.indexOf(SPACE) : strippedLastString.length() - 1;
         return strippedLastString.substring(0, lastIndex);
+    }
+
+    public static String getENTER() {
+        return ENTER;
     }
 
     // обработка введённого символа
@@ -116,8 +124,8 @@ public class Output {
 
     public String getLastStr(){
         String text = getText();
-        String[] splitedStrings = text.split(SHELL_START);
-        return splitedStrings[splitedStrings.length - 1];
+        String[] splitStrings = text.split(SHELL_START);
+        return splitStrings[splitStrings.length - 1];
     }
 
     public List<String> getParameters(String command) throws Exception {
@@ -166,5 +174,9 @@ public class Output {
             scrollPane.setVvalue(scrollPane.getVmax());
             Platform.runLater(() -> scrollPane.setVvalue(scrollPane.getVmax()));
         });
+    }
+
+    public Shell getShellModule() {
+        return shellModule;
     }
 }
