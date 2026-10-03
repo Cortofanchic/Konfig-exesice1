@@ -1,0 +1,22 @@
+{
+  "name": "/",
+  "type": "directory",
+  "children": [
+    {
+      "name": "motd",
+      "type": "file",
+      "content": "Добро пожаловать в MaryVFS!\n"
+    },
+    {
+      "name": "docs",
+      "type": "directory",
+      "children": [
+        {
+          "name": "readme.txt",
+          "type": "file",
+          "content": "Это README."
+        }
+      ]
+    }
+  ]
+}

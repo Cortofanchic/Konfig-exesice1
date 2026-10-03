@@ -14,7 +14,6 @@ import java.util.List;
 public class Test {
     private static List<String> readResource(String path) throws Exception {
         File file = new File(path);
-        System.out.println(path);
 
         if (file.exists()) {
             try{
