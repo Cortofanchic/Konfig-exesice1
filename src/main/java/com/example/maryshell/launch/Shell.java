@@ -1,6 +1,7 @@
 package com.example.maryshell.launch;
 
 import com.example.maryshell.ui.Output;
+import com.example.maryshell.vfs.VfsNode;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -14,9 +15,12 @@ import javafx.util.Duration;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -24,7 +28,7 @@ import static java.util.Arrays.stream;
 
 public class Shell extends Application {
     private Controller controller;
-    private String vfsPath = "MaryShell";
+    private VfsNode vfs;
     private String startScriptPath;
     private static final String NEW_LINE_SEP = "\n";
     private static final String ENTER = "\r";
@@ -73,10 +77,19 @@ public class Shell extends Application {
         stage.show(); // вывод окна
 
         readArgs();
+
+        if (vfs == null){
+            String DEFAULT_VFS_PATH = "src/main/resources/com/example/maryshell/vfs/vfs-default.json";
+            try{
+                vfs = new VfsNode(DEFAULT_VFS_PATH, findInStreamVfs(DEFAULT_VFS_PATH));
+            } catch (IOException e){
+                controller.getOutput().printExtra("Error: can't find vfs default file." + ENTER + Output.getShellStart());
+            }
+        }
     }
 
     public String getVfsPath() {
-        return vfsPath == null ? "\"\"" : vfsPath;
+        return vfs.getRootPath();
     }
 
     public String getStartScriptPath() {
@@ -93,7 +106,16 @@ public class Shell extends Application {
                 if (arg.startsWith(ERROR_PATH)){
                     controller.getOutput().printExtra(arg + Output.getShellStart());
                 } else if (arg.startsWith(VFS_TEG)){
-                    vfsPath = arg.substring(VFS_TEG.length());
+                    String vfsPath = arg.substring(VFS_TEG.length());
+                    if (!vfsPath.endsWith(".json")){
+                        controller.getOutput().printExtra("Error: vfs file incorrect format." + ENTER + Output.getShellStart());
+                    } else {
+                        try {
+                            vfs = new VfsNode(vfsPath, findInStreamVfs(vfsPath));
+                        } catch (IOException e) {
+                            controller.getOutput().printExtra("Error: vfs path is not exists.." + ENTER + Output.getShellStart());
+                        }
+                    }
                 } else if (arg.startsWith(SCRIPT_TEG)){
                     startScriptPath = arg.substring(SCRIPT_TEG.length());
                     List<String> textFromPath = readFileLines(startScriptPath);
@@ -104,11 +126,14 @@ public class Shell extends Application {
                     scripts.add(clearScriptText);
                 }
             }
-            System.out.println(startScriptPath);
-            System.out.println(vfsPath);
 
             runScript(stream(String.join(NEW_LINE_SEP, scripts).split(NEW_LINE_SEP)).toList());
         }
+    }
+
+    private InputStream findInStreamVfs(String stringPath) throws IOException {
+        Path path = Paths.get(stringPath);
+        return Files.newInputStream(path);
     }
 
     private String cleanStringFromComments(String str){
