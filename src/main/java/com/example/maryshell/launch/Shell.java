@@ -80,8 +80,8 @@ public class Shell extends Application {
 
         if (vfs == null){
             String DEFAULT_VFS_PATH = "src/main/resources/com/example/maryshell/vfs/vfs-default.json";
-            try{
-                vfs = new VfsNode(DEFAULT_VFS_PATH, findInStreamVfs(DEFAULT_VFS_PATH));
+            try (InputStream in = findInStreamVfs(DEFAULT_VFS_PATH)){
+                vfs = new VfsNode(DEFAULT_VFS_PATH);
             } catch (IOException e){
                 controller.getOutput().printExtra("Error: can't find vfs default file." + ENTER + Output.getShellStart());
             }
@@ -93,6 +93,10 @@ public class Shell extends Application {
         } catch (Exception e) {
             controller.getOutput().printExtra("Error: motd file not found" + ENTER + Output.getShellStart());
         }
+    }
+
+    public VfsNode getVfs() {
+        return vfs;
     }
 
     public String getVfsPath() {
@@ -117,8 +121,8 @@ public class Shell extends Application {
                     if (!vfsPath.endsWith(".json")){
                         controller.getOutput().printExtra("Error: vfs file incorrect format." + ENTER + Output.getShellStart());
                     } else {
-                        try {
-                            vfs = new VfsNode(vfsPath, findInStreamVfs(vfsPath));
+                        try (InputStream in = findInStreamVfs(vfsPath)){
+                            vfs = new VfsNode(vfsPath);
                         } catch (IOException e) {
                             controller.getOutput().printExtra("Error: vfs path is not exists.." + ENTER + Output.getShellStart());
                         }

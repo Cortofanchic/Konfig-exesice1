@@ -2,8 +2,11 @@ package com.example.maryshell.functionality;
 
 import com.example.maryshell.launch.Shell;
 import com.example.maryshell.ui.Output;
+import com.example.maryshell.vfs.VfsNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import javafx.application.Platform;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,11 +48,38 @@ public class Commands {
     }
 
     public static void ls(List<String> parameters){
-        outputModule.printExtra(String.format("this is ls function, parameters - %s\n", parameters.toString()));
+        if (!parameters.isEmpty()){
+            outputModule.printExtra("Error: ls command don't need arguments.");
+        } else {
+            try {
+                VfsNode vfs = shell.getVfs();
+                outputModule.printExtra(vfs.getComponent(vfs.getCurrentJsonNode(), 0));
+            } catch (Exception e) {
+                outputModule.printExtra("Error: can't read dir.");
+            }
+        }
+        outputModule.printExtra(Output.getENTER());
     }
 
     public static void cd(List<String> parameters){
-        outputModule.printExtra(String.format("this is cd function, parameters - %s\n", parameters.toString()));
+        final String PATH_START = "C:/";
+
+        if (parameters.isEmpty()) {
+            outputModule.printExtra("Error: don't have needed parameters.");
+        } else if (parameters.size() == 1){
+            try {
+                VfsNode vfs = shell.getVfs();
+                List<String> path = Arrays.stream(parameters.get(0).split("/")).toList();
+                vfs.goToPath(path);
+                String currentPath = String.join("/", vfs.getCurrentDir());
+                outputModule.printExtra(String.format("Current path: %s", currentPath.isEmpty() ? PATH_START : PATH_START + currentPath));
+            } catch (Exception e) {
+                outputModule.printExtra("Error: can't find path.");
+            }
+        } else {
+            outputModule.printExtra("Error: extra don't needed parameters.");
+        }
+        outputModule.printExtra(Output.getENTER());
     }
 
     public static void exit(List<String> parameters){

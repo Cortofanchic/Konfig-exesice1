@@ -138,16 +138,17 @@ public class Output {
 
         String string = lastString.substring(commandEndIndex);
 
-        String correctParamRegex = "\"[^\"]+\"";
+        String correctParamRegex = "\"[^\"]*\"";
         Matcher correctParamMatcher = Pattern.compile(correctParamRegex).matcher(string);
-        List<String> parameters = new ArrayList<>(Collections.emptyList());
+        List<String> parameters = new ArrayList<>();
 
         while (correctParamMatcher.find()){
-            parameters.add(correctParamMatcher.group());
+            String parameter = correctParamMatcher.group();
+            parameters.add(parameter.substring(1, parameter.length() - 1));
         }
 
         for (String parameter : parameters) {
-            string = string.replaceFirst(parameter, EMPTY_STRING);
+            string = string.replaceFirst(String.format("\"%s\"", parameter), EMPTY_STRING);
         }
 
         String incorrectParamRegex = "[^\"\\s]+";
