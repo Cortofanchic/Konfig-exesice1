@@ -31,6 +31,6 @@ public class VfsNode {
                 return child.get("content").asText();
             }
         }
-        return "no content";
+        return "no motd file";
     }
 }
