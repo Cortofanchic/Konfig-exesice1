@@ -1,0 +1,33 @@
+{
+  "name": "/",
+  "type": "directory",
+  "children": [
+    {
+      "name": "motd",
+      "type": "file",
+      "content": "Добро пожаловать в test-2 MaryShell!"
+    },
+    {
+      "name": "test2-1",
+      "type": "directory",
+      "children": [
+        {
+          "name": "readme.txt",
+          "type": "file",
+          "content": "Это README."
+        }
+      ]
+    },
+    {
+      "name": "test2-2",
+      "type": "directory",
+      "children": [
+        {
+          "name": "test.txt",
+          "type": "file",
+          "content": "Это папка test2."
+        }
+      ]
+    }
+  ]
+}
