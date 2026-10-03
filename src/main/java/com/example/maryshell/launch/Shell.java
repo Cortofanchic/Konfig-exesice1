@@ -86,6 +86,13 @@ public class Shell extends Application {
                 controller.getOutput().printExtra("Error: can't find vfs default file." + ENTER + Output.getShellStart());
             }
         }
+
+        try {
+            String motdStartString = "Motd vfs file: ";
+            controller.getOutput().printExtra(motdStartString + vfs.readMotd() + ENTER + Output.getShellStart());
+        } catch (Exception e) {
+            controller.getOutput().printExtra("Error: motd file not found" + ENTER + Output.getShellStart());
+        }
     }
 
     public String getVfsPath() {
