@@ -5,7 +5,7 @@
     {
       "name": "motd",
       "type": "file",
-      "content": "Добро пожаловать в MaryVFS!\n"
+      "content": "Добро пожаловать в MaryVFS!"
     },
     {
       "name": "docs",
