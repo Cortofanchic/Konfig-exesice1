@@ -1,0 +1,11 @@
+ls
+find "motd"
+find "*.txt"
+find "abcd"
+cd "docs/readme.txt"
+cd ".."
+cd "readme-error.txt"
+ls
+cal "today"
+cal "2026"
+cal "1 3 2014"
