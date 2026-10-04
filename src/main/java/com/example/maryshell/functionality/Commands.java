@@ -27,7 +27,8 @@ public class Commands {
                 Commands::exit,
                 Commands::confDump,
                 Commands::cal,
-                Commands::du
+                Commands::du,
+                Commands::find
         );
 
         List<String> names = List.of(
@@ -36,7 +37,8 @@ public class Commands {
                 "exit",
                 "conf-dump",
                 "cal",
-                "du"
+                "du",
+                "find"
         );
 
         for (int pointer = 0; pointer < commandsPointers.size(); pointer++){
@@ -70,7 +72,10 @@ public class Commands {
             String parameter = parameters.get(0);
             try {
                 if (Objects.equals(parameter, "..")){
-                    vfs.goParentDir();
+                    JsonNode parentNode = vfs.goParentDir(vfs.getCurrentJsonNode());
+                    List<String> findPath = vfs.findPath(parentNode);
+                    findPath.remove(0);
+                    vfs.setCurrentDir(findPath);
                 } else {
                     List<String> path = Arrays.stream(parameters.get(0).split("/")).toList();
                     vfs.goToPath(path);
@@ -147,6 +152,26 @@ public class Commands {
     }
 
     private static void find(List<String> parameters){
-
+        if (parameters.size() == 1) {
+            List<String> args = Arrays.stream(parameters.get(0).split(" ")).toList();
+            try {
+                VfsNode vfs = shell.getVfs();
+                switch (args.size()) {
+                    case 1:
+                        List<String> path = new ArrayList<>();
+                        vfs.findFile(args.get(0), vfs.getCurrentJsonNode(), path);
+                        outputModule.printExtra(String.format("Found file: %s.", String.join("/", path)));
+                        break;
+                    case 2: break;
+                    default:
+                        outputModule.printExtra("Error: extra arguments.");
+                }
+            } catch (Exception e){
+                outputModule.printExtra("Error: can't read vfs.");
+            }
+        } else {
+            outputModule.printExtra("Error: missing argument.");
+        }
+        outputModule.printExtra(Output.getENTER());
     }
 }

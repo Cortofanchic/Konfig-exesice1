@@ -11,9 +11,13 @@ import java.util.Objects;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import static java.util.Collections.reverse;
+
 public class VfsNode {
     private final String rootPath;
     private List<String> currentDir;
+    private final JsonTree jsonTree;
+    private JsonNode cachedRoot;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String ENTER = "\n";
@@ -21,7 +25,8 @@ public class VfsNode {
 
     public VfsNode(String rootPath) throws IOException {
         this.rootPath = rootPath;
-        this.currentDir = List.of();
+        this.currentDir = new ArrayList<>();
+        jsonTree = new JsonTree(getCurrentJsonNode());
     }
 
     public List<String> getCurrentDir() {
@@ -105,18 +110,8 @@ public class VfsNode {
         return json;
     }
 
-    public JsonNode goParentDir() throws IOException {
-        if (currentDir.isEmpty()) {
-            return goToPath(getCurrentDir());
-        }
-
-        List<String> parentPath = new ArrayList<>(getCurrentDir());
-        parentPath.remove(parentPath.size() - 1);
-
-        JsonNode result = goToPath(parentPath);
-        parentPath.remove(0);
-        currentDir = parentPath;
-        return result;
+    public JsonNode goParentDir(JsonNode jsonNode) {
+        return jsonTree.getParent(jsonNode);
     }
 
     public String getRootPath() {
@@ -124,11 +119,14 @@ public class VfsNode {
     }
 
     public JsonNode readJson() throws IOException {
-        try (InputStream in = Files.newInputStream(Paths.get(rootPath))){
-            return MAPPER.readTree(in);
-        } catch (Exception e){
-            throw new IOException("Error: can't open root path.");
+        if (cachedRoot == null) {
+            try (InputStream in = Files.newInputStream(Paths.get(rootPath))) {
+                cachedRoot = MAPPER.readTree(in);
+            } catch (Exception e) {
+                throw new IOException("Error: can't open root path.", e);
+            }
         }
+        return cachedRoot;
     }
 
     public String readMotd() throws IOException {
@@ -151,5 +149,44 @@ public class VfsNode {
         } else {
             return node.get("content").textValue().length();
         }
+    }
+
+    public void findFile(String pattern, JsonNode json, List<String> acc) {
+        String name = json.path("name").textValue();
+
+        if (matches(name, pattern)) {
+            acc.add(String.join("/", findPath(json)));
+        }
+
+        if (json.has("children")) {
+            for (JsonNode child : json.get("children")) {
+                findFile(pattern, child, acc);
+            }
+        }
+    }
+
+    public List<String> findPath(JsonNode jsonNode) {
+        List<String> path = new ArrayList<>();
+
+        while (jsonNode.has("name") && !Objects.equals(jsonNode.get("name").textValue(), "/")){
+            path.add(jsonNode.get("name").textValue());
+            jsonNode = goParentDir(jsonNode);
+        }
+
+        path.add(PATH_START);
+        reverse(path);
+        return path;
+    }
+
+    private static boolean matches(String name, String pattern) {
+        String regex = pattern
+                .replace(".", "\\.")
+                .replace("*", ".*")
+                .replace("?", ".");
+        return name.matches(regex);
+    }
+
+    public void setCurrentDir(List<String> currentDir) {
+        this.currentDir = currentDir;
     }
 }
