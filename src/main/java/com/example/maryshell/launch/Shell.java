@@ -204,15 +204,6 @@ public class Shell extends Application {
             ));
 
             t += TIME_BREAK;
-            timeline.getKeyFrames().add(new KeyFrame(
-                    Duration.millis(t),
-                    e -> {
-                        String response = controller.getOutput().getLastStr();
-                        if (!response.isBlank()) System.out.println(response.replace("\n", ""));
-                    }
-            ));
-
-            t += TIME_BREAK;
         }
         timeline.play();
     }

@@ -130,7 +130,6 @@ public class Output {
 
     public List<String> getParameters(String command) throws Exception {
         String lastString = getLastStr();
-
         int commandEndIndex = lastString.indexOf(command) + command.length() + 1;
         if (lastString.length() == commandEndIndex){
             return Collections.emptyList();
@@ -148,7 +147,7 @@ public class Output {
         }
 
         for (String parameter : parameters) {
-            string = string.replaceFirst(String.format("\"%s\"", parameter), EMPTY_STRING);
+            string = string.replaceFirst(String.format("\"%s\"", Pattern.quote(parameter)), EMPTY_STRING);
         }
 
         String incorrectParamRegex = "[^\"\\s]+";

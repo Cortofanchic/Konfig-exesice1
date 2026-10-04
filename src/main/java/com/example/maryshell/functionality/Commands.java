@@ -156,15 +156,16 @@ public class Commands {
             List<String> args = Arrays.stream(parameters.get(0).split(" ")).toList();
             try {
                 VfsNode vfs = shell.getVfs();
-                switch (args.size()) {
-                    case 1:
-                        List<String> path = new ArrayList<>();
-                        vfs.findFile(args.get(0), vfs.getCurrentJsonNode(), path);
+                if (args.size() == 1) {
+                    List<String> path = new ArrayList<>();
+                    vfs.findFile(args.get(0), vfs.getCurrentJsonNode(), path);
+                    if (path.isEmpty()){
+                        outputModule.printExtra("Don't find file.");
+                    } else {
                         outputModule.printExtra(String.format("Found file: %s.", String.join("/", path)));
-                        break;
-                    case 2: break;
-                    default:
-                        outputModule.printExtra("Error: extra arguments.");
+                    }
+                } else {
+                    outputModule.printExtra("Error: extra arguments.");
                 }
             } catch (Exception e){
                 outputModule.printExtra("Error: can't read vfs.");
