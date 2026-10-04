@@ -140,4 +140,16 @@ public class VfsNode {
         }
         return "no motd file";
     }
+
+    public int findDiskUsage(JsonNode node){
+        if (node.has("children")){
+            int endUsage = 0;
+            for (JsonNode child: node.get("children")){
+                endUsage += findDiskUsage(child);
+            }
+            return endUsage;
+        } else {
+            return node.get("content").textValue().length();
+        }
+    }
 }

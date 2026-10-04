@@ -3,6 +3,7 @@ package com.example.maryshell.functionality;
 import com.example.maryshell.launch.Shell;
 import com.example.maryshell.ui.Output;
 import com.example.maryshell.vfs.VfsNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import javafx.application.Platform;
 
 import java.util.*;
@@ -25,7 +26,8 @@ public class Commands {
                 Commands::ls,
                 Commands::exit,
                 Commands::confDump,
-                Commands::cal
+                Commands::cal,
+                Commands::du
         );
 
         List<String> names = List.of(
@@ -33,7 +35,8 @@ public class Commands {
                 "ls",
                 "exit",
                 "conf-dump",
-                "cal"
+                "cal",
+                "du"
         );
 
         for (int pointer = 0; pointer < commandsPointers.size(); pointer++){
@@ -97,7 +100,7 @@ public class Commands {
             try {
                 outputModule.printExtra(String.format("vfs.root=%s, vfs.script=%s", shell.getVfsPath(), shell.getStartScriptPath()) + Output.getENTER());
             } catch (Exception e){
-                System.out.println(e.getMessage());
+                outputModule.printExtra(String.format("Error: can't read vfs dir." + Output.getENTER()));
             }
         } else {
             outputModule.printExtra("Error: conf-dump command doesn't need arguments" + Output.getENTER());
@@ -120,7 +123,27 @@ public class Commands {
     }
 
     private static void du(List<String> parameters){
-
+        VfsNode vfs = shell.getVfs();
+        try {
+            int bytes;
+            if (parameters.size() < 2) {
+                if (parameters.isEmpty()) {
+                    JsonNode currentNode = vfs.getCurrentJsonNode();
+                    bytes = vfs.findDiskUsage(currentNode);
+                } else {
+                    List<String> startDir = vfs.getCurrentDir();
+                    List<String> path = Arrays.stream(parameters.get(0).split("/")).toList();
+                    bytes = vfs.findDiskUsage(vfs.goToPath(path));
+                    vfs.goToPath(startDir);
+                }
+                outputModule.printExtra(String.format("Disk usage of current dir: %d bytes.", bytes));
+            } else {
+                outputModule.printExtra("Error: two many parameters.");
+            }
+        } catch (Exception e){
+            outputModule.printExtra("Error: can't read vfs.");
+        }
+        outputModule.printExtra(Output.getENTER());
     }
 
     private static void find(List<String> parameters){
