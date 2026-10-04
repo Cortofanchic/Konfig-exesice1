@@ -24,14 +24,16 @@ public class Commands {
                 Commands::cd,
                 Commands::ls,
                 Commands::exit,
-                Commands::confDump
+                Commands::confDump,
+                Commands::cal
         );
 
         List<String> names = List.of(
                 "cd",
                 "ls",
                 "exit",
-                "conf-dump"
+                "conf-dump",
+                "cal"
         );
 
         for (int pointer = 0; pointer < commandsPointers.size(); pointer++){
@@ -76,7 +78,7 @@ public class Commands {
                 outputModule.printExtra("Error: can't find path.");
             }
         } else {
-            outputModule.printExtra("Error: extra don't needed parameters.");
+            outputModule.printExtra("Error: cd command doesn't need parameters.");
         }
         outputModule.printExtra(Output.getENTER());
     }
@@ -86,7 +88,7 @@ public class Commands {
             Platform.exit();
             System.exit(0);
         } else {
-            outputModule.printExtra("Error: exit command don't need arguments" + Output.getENTER());
+            outputModule.printExtra("Error: exit command doesn't need arguments" + Output.getENTER());
         }
     }
 
@@ -98,12 +100,23 @@ public class Commands {
                 System.out.println(e.getMessage());
             }
         } else {
-            outputModule.printExtra("Error: conf-dump command don't need arguments" + Output.getENTER());
+            outputModule.printExtra("Error: conf-dump command doesn't need arguments" + Output.getENTER());
         }
     }
 
     private static void cal(List<String> parameters){
-
+        if (parameters.size() != 1){
+            outputModule.printExtra("Error: incorrect parameters.");
+        } else {
+            try {
+                List<String> args = Arrays.stream(parameters.get(0).split(" ")).toList();
+                Calendar cal = new Calendar(args);
+                outputModule.printExtra(cal.printCal());
+            } catch (Exception e) {
+                outputModule.printExtra("Error: incorrect parameters.");
+            }
+        }
+        outputModule.printExtra(Output.getENTER());
     }
 
     private static void du(List<String> parameters){

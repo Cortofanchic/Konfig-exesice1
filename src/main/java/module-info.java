@@ -4,6 +4,7 @@ module com.example.maryshell {
     requires java.desktop;
     requires jdk.jfr;
     requires com.fasterxml.jackson.databind;
+    requires net.bytebuddy;
 
 
     opens com.example.maryshell to javafx.fxml;
