@@ -25,7 +25,10 @@ public class VfsNode {
     }
 
     public List<String> getCurrentDir() {
-        return currentDir;
+        List<String> fullCurrentDir = new ArrayList<>();
+        fullCurrentDir.add(PATH_START);
+        fullCurrentDir.addAll(currentDir);
+        return fullCurrentDir;
     }
 
     public JsonNode getCurrentJsonNode() throws IOException {
@@ -102,10 +105,18 @@ public class VfsNode {
         return json;
     }
 
-    public void goParentDir(){
-        if (!currentDir.isEmpty()){
-            currentDir.remove(currentDir.size() - 1);
+    public JsonNode goParentDir() throws IOException {
+        if (currentDir.isEmpty()) {
+            return goToPath(getCurrentDir());
         }
+
+        List<String> parentPath = new ArrayList<>(getCurrentDir());
+        parentPath.remove(parentPath.size() - 1);
+
+        JsonNode result = goToPath(parentPath);
+        parentPath.remove(0);
+        currentDir = parentPath;
+        return result;
     }
 
     public String getRootPath() {

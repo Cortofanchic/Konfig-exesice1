@@ -3,13 +3,9 @@ package com.example.maryshell.functionality;
 import com.example.maryshell.launch.Shell;
 import com.example.maryshell.ui.Output;
 import com.example.maryshell.vfs.VfsNode;
-import com.fasterxml.jackson.databind.JsonNode;
 import javafx.application.Platform;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class Commands {
@@ -62,17 +58,20 @@ public class Commands {
     }
 
     public static void cd(List<String> parameters){
-        final String PATH_START = "C:/";
-
         if (parameters.isEmpty()) {
             outputModule.printExtra("Error: don't have needed parameters.");
         } else if (parameters.size() == 1){
+            VfsNode vfs = shell.getVfs();
+            String parameter = parameters.get(0);
             try {
-                VfsNode vfs = shell.getVfs();
-                List<String> path = Arrays.stream(parameters.get(0).split("/")).toList();
-                vfs.goToPath(path);
+                if (Objects.equals(parameter, "..")){
+                    vfs.goParentDir();
+                } else {
+                    List<String> path = Arrays.stream(parameters.get(0).split("/")).toList();
+                    vfs.goToPath(path);
+                }
                 String currentPath = String.join("/", vfs.getCurrentDir());
-                outputModule.printExtra(String.format("Current path: %s", currentPath.isEmpty() ? PATH_START : PATH_START + currentPath));
+                outputModule.printExtra(String.format("Current path: %s", currentPath));
             } catch (Exception e) {
                 outputModule.printExtra("Error: can't find path.");
             }
@@ -101,5 +100,17 @@ public class Commands {
         } else {
             outputModule.printExtra("Error: conf-dump command don't need arguments" + Output.getENTER());
         }
+    }
+
+    private static void cal(List<String> parameters){
+
+    }
+
+    private static void du(List<String> parameters){
+
+    }
+
+    private static void find(List<String> parameters){
+
     }
 }
