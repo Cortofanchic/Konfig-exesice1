@@ -1,6 +1,7 @@
 package com.example.maryshell.launch;
 
 import com.example.maryshell.ui.Output;
+import com.example.maryshell.vfs.OwnershipRegistry;
 import com.example.maryshell.vfs.VfsNode;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -30,6 +31,7 @@ public class Shell extends Application {
     private Controller controller;
     private VfsNode vfs;
     private String startScriptPath;
+    private OwnershipRegistry registry;
     private static final String NEW_LINE_SEP = "\n";
     private static final String ENTER = "\r";
     private static final String VFS_TEG = "VFS=";
@@ -93,6 +95,12 @@ public class Shell extends Application {
         } catch (Exception e) {
             controller.getOutput().printExtra("Error: motd file not found" + ENTER + Output.getShellStart());
         }
+
+        registry = new OwnershipRegistry(vfs.readJson());
+    }
+
+    public OwnershipRegistry getRegistry() {
+        return registry;
     }
 
     public VfsNode getVfs() {

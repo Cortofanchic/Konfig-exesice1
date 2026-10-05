@@ -2,16 +2,30 @@ package com.example.maryshell.functionality;
 
 import com.example.maryshell.launch.Shell;
 import com.example.maryshell.ui.Output;
+import com.example.maryshell.vfs.OwnershipRegistry;
 import com.example.maryshell.vfs.VfsNode;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.application.Platform;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.function.Consumer;
 
 public class Commands {
     private static Output outputModule;
     private static Shell shell;
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    private static JsonNode root;
+    private static OwnershipRegistry ownership;
+
+    public static void setVfs(InputStream in) throws IOException {
+        Commands.root = MAPPER.readTree(in);
+        Commands.ownership = new OwnershipRegistry(root);
+    }
 
     public static void setOutputModule(Output output) {
         outputModule = output;
@@ -28,7 +42,8 @@ public class Commands {
                 Commands::confDump,
                 Commands::cal,
                 Commands::du,
-                Commands::find
+                Commands::find,
+                Commands::chown
         );
 
         List<String> names = List.of(
@@ -38,7 +53,8 @@ public class Commands {
                 "conf-dump",
                 "cal",
                 "du",
-                "find"
+                "find",
+                "chown"
         );
 
         for (int pointer = 0; pointer < commandsPointers.size(); pointer++){
@@ -174,5 +190,58 @@ public class Commands {
             outputModule.printExtra("Error: missing argument.");
         }
         outputModule.printExtra(Output.getENTER());
+    }
+
+    private static void chown(List<String> parameters) {
+        if (parameters.size() == 2) {
+            try {
+                VfsNode vfs = shell.getVfs();
+                OwnershipRegistry ownershipRegistry = shell.getRegistry();
+                String newOwner = parameters.get(0);
+                List<String> path = Arrays.stream(parameters.get(1).split("/")).toList();
+                List<String> curDir = vfs.getCurrentDir();
+                JsonNode jsonNode = vfs.goToPath(path);
+                vfs.goToPath(curDir);
+                if (newOwner.contains(":")){
+                    String newUser = newOwner.split(":")[0];
+                    String newGroup = newOwner.split(":")[1];
+                    ownershipRegistry.set(jsonNode, newUser, newGroup);
+                    outputModule.printExtra(String.format("Set %s to new user %s and group %s.", parameters.get(1), newUser, newGroup));
+                } else {
+                    ownershipRegistry.setUser(jsonNode, newOwner);
+                    outputModule.printExtra(String.format("Set %s to new user %s.", parameters.get(1), newOwner));
+                }
+            } catch (Exception e){
+                outputModule.printExtra("Error: can't read vfs.");
+            }
+        } else if (parameters.size() == 3 && Objects.equals(parameters.get(0), "-R")) {
+            try {
+                chownRecursive(parameters);
+            } catch (Exception e){
+                outputModule.printExtra("Error: can't read vfs.");
+            }
+        }else {
+            outputModule.printExtra("Error: for using command write - chown \"owner[:group]\" \"path\"");
+        }
+        outputModule.printExtra(Output.getENTER());
+    }
+
+    private static void chownRecursive(List<String> parameters) throws IOException {
+        VfsNode vfs = shell.getVfs();
+        OwnershipRegistry ownershipRegistry = shell.getRegistry();
+        String newOwner = parameters.get(1);
+        List<String> path = Arrays.stream(parameters.get(2).split("/")).toList();
+        List<String> curDir = vfs.getCurrentDir();
+        JsonNode jsonNode = vfs.goToPath(path);
+        vfs.goToPath(curDir);
+        if (newOwner.contains(":")){
+            String newUser = newOwner.split(":")[0];
+            String newGroup = newOwner.split(":")[1];
+            ownershipRegistry.setRecursive(jsonNode, newUser, newGroup);
+            outputModule.printExtra(String.format("Set recursive %s to new user %s and group %s.", parameters.get(2), newUser, newGroup));
+        } else {
+            ownershipRegistry.setRecursive(jsonNode, newOwner, ownershipRegistry.getGroup(jsonNode));
+            outputModule.printExtra(String.format("Set recursive %s to new user %s.", parameters.get(2), newOwner));
+        }
     }
 }
