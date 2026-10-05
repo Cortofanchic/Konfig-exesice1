@@ -200,7 +200,14 @@ public class Commands {
                 String newOwner = parameters.get(0);
                 List<String> path = Arrays.stream(parameters.get(1).split("/")).toList();
                 List<String> curDir = vfs.getCurrentDir();
-                JsonNode jsonNode = vfs.goToPath(path);
+                JsonNode jsonNode;
+                try {
+                    jsonNode = vfs.goToPath(path);
+                } catch (IOException e) {
+                    outputModule.printExtra("Error: incorrect path.");
+                    outputModule.printExtra(Output.getENTER());
+                    return;
+                }
                 vfs.goToPath(curDir);
                 if (newOwner.contains(":")){
                     String newUser = newOwner.split(":")[0];
@@ -232,7 +239,14 @@ public class Commands {
         String newOwner = parameters.get(1);
         List<String> path = Arrays.stream(parameters.get(2).split("/")).toList();
         List<String> curDir = vfs.getCurrentDir();
-        JsonNode jsonNode = vfs.goToPath(path);
+        JsonNode jsonNode;
+        try {
+            jsonNode = vfs.goToPath(path);
+        } catch (IOException e) {
+            outputModule.printExtra("Error: incorrect path.");
+            outputModule.printExtra(Output.getENTER());
+            return;
+        }
         vfs.goToPath(curDir);
         if (newOwner.contains(":")){
             String newUser = newOwner.split(":")[0];
