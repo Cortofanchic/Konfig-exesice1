@@ -1,0 +1,6 @@
+module:com.example.maryshell
+com.example.maryshell.build
+com.example.maryshell.functionality
+com.example.maryshell.launch
+com.example.maryshell.ui
+com.example.maryshell.vfs

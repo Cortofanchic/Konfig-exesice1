@@ -13,6 +13,26 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.function.Consumer;
 
+/**
+ * Реестр и реализация команд эмулятора оболочки UNIX.
+ * <p>
+ * Содержит статические методы-команды ({@code ls}, {@code cd}, {@code cat},
+ * {@code find}, {@code du}, {@code chown}, {@code cal}, {@code conf-dump},
+ * {@code exit}), а также фабрику {@link #getCommands()} для регистрации
+ * команд в {@link Output}.
+ * <p>
+ * Все команды работают с виртуальной файловой системой (VFS),
+ * загруженной в память. Исходный JSON-файл VFS не модифицируется —
+ * изменения (например, смена владельца в {@code chown}) хранятся
+ * только в {@link OwnershipRegistry}.
+ *
+ * @author Cortofanchic
+ * @version 1.0
+ * @see Shell
+ * @see Output
+ * @see VfsNode
+ * @see OwnershipRegistry
+ */
 public class Commands {
     private static Output outputModule;
     private static Shell shell;
@@ -22,16 +42,37 @@ public class Commands {
     private static JsonNode root;
     private static OwnershipRegistry ownership;
 
+    /**
+     * Загружает VFS из JSON-потока и создаёт реестр владельцев.
+     * <p>
+     * Вызывается один раз при старте приложения.
+     *
+     * @param in поток с JSON-содержимым VFS
+     * @throws IOException если JSON не читается или имеет неверный формат
+     */
     public static void setVfs(InputStream in) throws IOException {
         Commands.root = MAPPER.readTree(in);
         Commands.ownership = new OwnershipRegistry(root);
     }
 
+    /**
+     * Устанавливает модуль вывода и получает ссылку на приложение.
+     *
+     * @param output модуль вывода
+     */
     public static void setOutputModule(Output output) {
         outputModule = output;
         shell = outputModule.getShellModule();
     }
 
+    /**
+     * Создаёт карту зарегистрированных команд.
+     * <p>
+     * Ключ — имя команды, значение — {@link RunModule} с ссылкой
+     * на соответствующий метод {@code Commands}.
+     *
+     * @return карта команд
+     */
     public static Map<String, RunModule<List<String>>> getCommands(){
         Map<String, RunModule<List<String>>> commands = new HashMap<>(); // имя метода - метод
 
@@ -66,6 +107,14 @@ public class Commands {
         return commands;
     }
 
+    /**
+     * Выводит список файлов и папок в текущей директории VFS.
+     * <p>
+     * Если VFS недоступен — выводит
+     * сообщение об ошибке.
+     *
+     * @param parameters аргументы команды (должны быть пусты)
+     */
     public static void ls(List<String> parameters){
         if (!parameters.isEmpty()){
             outputModule.printExtra("Error: ls command don't need arguments.");
@@ -80,6 +129,17 @@ public class Commands {
         outputModule.printExtra(Output.getENTER());
     }
 
+    /**
+     * Переходит в указанную директорию VFS.
+     * <p>
+     * Поддерживает:
+     * <ul>
+     *   <li>{@code cd ".."} — подняться на уровень вверх</li>
+     *   <li>{@code cd "path"} — перейти по относительному или абсолютному пути</li>
+     * </ul>
+     *
+     * @param parameters аргументы команды (один путь)
+     */
     public static void cd(List<String> parameters){
         if (parameters.isEmpty()) {
             outputModule.printExtra("Error: don't have needed parameters.");
@@ -107,6 +167,14 @@ public class Commands {
         outputModule.printExtra(Output.getENTER());
     }
 
+    /**
+     * Завершает работу эмулятора.
+     * <p>
+     * Вызывает {@link Platform#exit()} и
+     * {@link System#exit(int)}.
+     *
+     * @param parameters аргументы команды (должны быть пусты)
+     */
     public static void exit(List<String> parameters){
         if (parameters.isEmpty()){
             Platform.exit();
@@ -116,6 +184,13 @@ public class Commands {
         }
     }
 
+    /**
+     * Выводит параметры эмулятора в формате {@code ключ=значение}.
+     * <p>
+     * Служебная команда. Выводит путь к VFS и путь к стартовому скрипту.
+     *
+     * @param parameters аргументы команды (должны быть пусты)
+     */
     public static void confDump(List<String> parameters){
         if (parameters.isEmpty()){
             try {
@@ -128,6 +203,15 @@ public class Commands {
         }
     }
 
+    /**
+     * Выводит календарь на текущий месяц или год.
+     * <p>
+     * Принимает один аргумент — строку с параметрами календаря
+     * (год, месяц, день, относительная дата).
+     *
+     * @param parameters аргументы команды (одна строка)
+     * @see Calendar
+     */
     private static void cal(List<String> parameters){
         if (parameters.size() != 1){
             outputModule.printExtra("Error: incorrect parameters.");
@@ -143,6 +227,14 @@ public class Commands {
         outputModule.printExtra(Output.getENTER());
     }
 
+    /**
+     * Выводит размер директории VFS в байтах.
+     * <p>
+     * Без аргументов — размер текущей директории.
+     * С аргументом — размер указанной директории.
+     *
+     * @param parameters аргументы команды (опционально путь)
+     */
     private static void du(List<String> parameters){
         VfsNode vfs = shell.getVfs();
         try {
@@ -167,6 +259,13 @@ public class Commands {
         outputModule.printExtra(Output.getENTER());
     }
 
+    /**
+     * Рекурсивно ищет файлы по имени в VFS.
+     * <p>
+     * Принимает один аргумент — маску имени ({@code *}, {@code ?}).
+     *
+     * @param parameters аргументы команды (маска)
+     */
     private static void find(List<String> parameters){
         if (parameters.size() == 1) {
             List<String> args = Arrays.stream(parameters.get(0).split(" ")).toList();
@@ -192,6 +291,20 @@ public class Commands {
         outputModule.printExtra(Output.getENTER());
     }
 
+    /**
+     * Меняет владельца файла или директории VFS.
+     * <p>
+     * Поддерживает форматы:
+     * <ul>
+     *   <li>{@code chown "user" "path"} — сменить владельца</li>
+     *   <li>{@code chown "user:group" "path"} — сменить владельца и группу</li>
+     *   <li>{@code chown "-R" "user" "path"} — рекурсивно</li>
+     * </ul>
+     * Изменения хранятся только в {@link OwnershipRegistry} — исходный
+     * JSON-файл VFS не модифицируется.
+     *
+     * @param parameters аргументы команды
+     */
     private static void chown(List<String> parameters) {
         if (parameters.size() == 2) {
             try {
@@ -233,6 +346,14 @@ public class Commands {
         outputModule.printExtra(Output.getENTER());
     }
 
+    /**
+     * Рекурсивно меняет владельца директории и всех вложенных узлов.
+     * <p>
+     * Вспомогательный метод для {@code chown "-R"}.
+     *
+     * @param parameters аргументы: {@code "-R" "owner[:group]" "path"}
+     * @throws IOException если путь не найден в VFS
+     */
     private static void chownRecursive(List<String> parameters) throws IOException {
         VfsNode vfs = shell.getVfs();
         OwnershipRegistry ownershipRegistry = shell.getRegistry();

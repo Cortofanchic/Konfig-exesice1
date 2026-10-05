@@ -27,6 +27,23 @@ import java.util.List;
 import java.util.regex.Pattern;
 import static java.util.Arrays.stream;
 
+/**
+ * Главный класс приложения MaryVFS.
+ * <p>
+ * Точка входа JavaFX-приложения. Загружает FXML, создаёт контроллер
+ * и {@link Output}, читает параметры командной строки, загружает
+ * VFS из JSON, выводит {@code motd} и запускает стартовый скрипт.
+ * <p>
+ * Все операции с VFS производятся в памяти — исходный JSON-файл
+ * не модифицируется.
+ *
+ * @author Cortofanchic
+ * @version 1.0
+ * @see Controller
+ * @see Output
+ * @see VfsNode
+ * @see OwnershipRegistry
+ */
 public class Shell extends Application {
     private Controller controller;
     private VfsNode vfs;
@@ -40,6 +57,19 @@ public class Shell extends Application {
     private static final String ERROR_PATH = "Error:";
     private static final String EMPTY_STRING = "";
 
+    /**
+     * Запускает JavaFX-приложение.
+     * <p>
+     * Загружает FXML, создаёт контроллер через
+     * {@link FXMLLoader#setControllerFactory}, инициализирует
+     * {@link Output}, сцену и окно. После {@code stage.show()}
+     * вызывает {@link Shell#startDefault()} — читает аргументы
+     * командной строки, загружает VFS, выводит {@code motd}
+     * и создаёт {@link OwnershipRegistry}.
+     *
+     * @param stage главное окно приложения
+     * @throws IOException если FXML не найден или не читается
+     */
     @Override
     public void start(Stage stage) throws IOException {
         URL url = getClass().getResource("/com/example/maryshell/view.fxml");
@@ -81,6 +111,15 @@ public class Shell extends Application {
         startDefault();
     }
 
+    /**
+     * Инициализирует эмулятор после показа окна.
+     * <p>
+     * Читает аргументы командной строки, загружает VFS
+     * (если не задан — из файла по умолчанию), выводит {@code motd}
+     * и создаёт {@link OwnershipRegistry}.
+     *
+     * @throws IOException если VFS не читается
+     */
     private void startDefault() throws IOException {
         readArgs();
 
@@ -103,22 +142,55 @@ public class Shell extends Application {
         registry = new OwnershipRegistry(vfs.readJson());
     }
 
+    /**
+     * Возвращает реестр владельцев узлов VFS.
+     *
+     * @return реестр владельцев
+     */
     public OwnershipRegistry getRegistry() {
         return registry;
     }
 
+    /**
+     * Возвращает загруженную VFS.
+     *
+     * @return VFS
+     */
     public VfsNode getVfs() {
         return vfs;
     }
 
+    /**
+     * Возвращает путь к JSON-файлу VFS.
+     *
+     * @return путь к VFS
+     */
     public String getVfsPath() {
         return vfs.getRootPath();
     }
 
+    /**
+     * Возвращает путь к стартовому скрипту.
+     * <p>
+     * Если скрипт не задан — возвращает строку из двух кавычек.
+     *
+     * @return путь к стартовому скрипту
+     */
     public String getStartScriptPath() {
         return startScriptPath == null ? "\"\"" : startScriptPath;
     }
 
+    /**
+     * Читает и обрабатывает аргументы командной строки.
+     * <p>
+     * Поддерживает:
+     * <ul>
+     *   <li>{@code VFS="<path>"} — путь к JSON-файлу VFS</li>
+     *   <li>{@code SCRIPT="<path>"} — путь к стартовому скрипту</li>
+     *   <li>{@code "<commands>"} — тестовые команды</li>
+     * </ul>
+     * Найденные скрипты склеиваются и передаются в {@link #runScript(List)}.
+     */
     private void readArgs(){
         List<String> args = getParameters().getRaw();
 
@@ -154,11 +226,30 @@ public class Shell extends Application {
         }
     }
 
+    /**
+     * Открывает входной поток к JSON-файлу VFS.
+     *
+     * @param stringPath путь к файлу
+     * @return входной поток
+     * @throws IOException если файл не найден или не читается
+     */
     private InputStream findInStreamVfs(String stringPath) throws IOException {
         Path path = Paths.get(stringPath);
         return Files.newInputStream(path);
     }
 
+    /**
+     * Удаляет комментарии из строки.
+     * <p>
+     * Поддерживает:
+     * <ul>
+     *   <li>многострочные: {@code /* ... *}{@code /};</li>
+     *   <li>однострочные: {@code // ...} до конца строки.</li>
+     * </ul>
+     *
+     * @param str исходная строка
+     * @return строка без комментариев
+     */
     private String cleanStringFromComments(String str){
         Pattern REGEX_MULTI_LINE_COMMENTS =  Pattern.compile("/\\*.*\\*/", Pattern.DOTALL);
         Pattern REGEX_INLINE_COMMENTS = Pattern.compile("//[^\\n\\r]*");
@@ -168,6 +259,12 @@ public class Shell extends Application {
         return str;
     }
 
+    /**
+     * Читает файл построчно в кодировке UTF-8.
+     *
+     * @param path путь к файлу
+     * @return список строк файла или пустой список, если файл не найден
+     */
     private List<String> readFileLines(String path){
         File file = new File(path);
 
@@ -183,16 +280,34 @@ public class Shell extends Application {
         return List.of();
     }
 
+    /**
+     * Точка входа приложения.
+     *
+     * @param args аргументы командной строки
+     */
     public static void main(String[] args) {
         launch();
     }
 
+    /**
+     * Настраивает главное окно: центрирует, задаёт заголовок,
+     * выводит на передний план.
+     *
+     * @param stage главное окно
+     */
     public void customStage(Stage stage){
         stage.centerOnScreen();
         stage.setTitle("MaryVFS");
         stage.toFront(); // на передний план
     }
 
+    /**
+     * Запускает стартовый скрипт: посимвольно вводит команды
+     * в {@link Output} с задержкой {@code TIME_BREAK} мс,
+     * имитируя диалог с пользователем.
+     *
+     * @param lines строки скрипта (по одной команде на строку)
+     */
     public void runScript(List<String> lines) {
         Timeline timeline = new Timeline();
         int TIME_BREAK = 500;
@@ -219,6 +334,12 @@ public class Shell extends Application {
         timeline.play();
     }
 
+    /**
+     * Создаёт событие нажатия клавиши с указанным символом.
+     *
+     * @param character символ
+     * @return событие {@code KEY_TYPED}
+     */
     private static KeyEvent keyEvent(String character) {
         String EMPTY_STRING = "";
         return new KeyEvent(
