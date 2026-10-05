@@ -34,9 +34,9 @@ public class Shell extends Application {
     private OwnershipRegistry registry;
     private static final String NEW_LINE_SEP = "\n";
     private static final String ENTER = "\r";
-    private static final String VFS_TEG = "VFS=";
-    private static final String SCRIPT_TEG = "SCRIPT=";
-    private static final String TEST_TEG = "TEST=";
+    private static final String VFS_TAG = "VFS=";
+    private static final String SCRIPT_TAG = "SCRIPT=";
+    private static final String TEST_TAG = "TEST=";
     private static final String ERROR_PATH = "Error:";
     private static final String EMPTY_STRING = "";
 
@@ -78,6 +78,10 @@ public class Shell extends Application {
         stage.setScene(scene); // вывод scene в stage
         stage.show(); // вывод окна
 
+        startDefault();
+    }
+
+    private void startDefault() throws IOException {
         readArgs();
 
         if (vfs == null){
@@ -124,8 +128,8 @@ public class Shell extends Application {
             for (String arg: args){
                 if (arg.startsWith(ERROR_PATH)){
                     controller.getOutput().printExtra(arg + Output.getShellStart());
-                } else if (arg.startsWith(VFS_TEG)){
-                    String vfsPath = arg.substring(VFS_TEG.length());
+                } else if (arg.startsWith(VFS_TAG)){
+                    String vfsPath = arg.substring(VFS_TAG.length());
                     if (!vfsPath.endsWith(".json")){
                         controller.getOutput().printExtra("Error: vfs file incorrect format." + ENTER + Output.getShellStart());
                     } else {
@@ -135,13 +139,13 @@ public class Shell extends Application {
                             controller.getOutput().printExtra("Error: vfs path is not exists.." + ENTER + Output.getShellStart());
                         }
                     }
-                } else if (arg.startsWith(SCRIPT_TEG)){
-                    startScriptPath = arg.substring(SCRIPT_TEG.length());
+                } else if (arg.startsWith(SCRIPT_TAG)){
+                    startScriptPath = arg.substring(SCRIPT_TAG.length());
                     List<String> textFromPath = readFileLines(startScriptPath);
                     String clearScriptText = cleanStringFromComments(String.join(NEW_LINE_SEP, textFromPath));
                     scripts.add(clearScriptText);
                 } else {
-                    String clearScriptText = cleanStringFromComments(arg.substring(TEST_TEG.length()));
+                    String clearScriptText = cleanStringFromComments(arg.substring(TEST_TAG.length()));
                     scripts.add(clearScriptText);
                 }
             }
@@ -192,7 +196,6 @@ public class Shell extends Application {
     public void runScript(List<String> lines) {
         Timeline timeline = new Timeline();
         int TIME_BREAK = 500;
-        String ENTER = "\r";
 
         double t = TIME_BREAK;
 
