@@ -1,0 +1,6 @@
+ls
+chown "-R" "mary:main_users" "docs/readme.txt"
+chown "main user" "docs"
+chown "-R" "main" "motd"
+chown "my" "don't_exists.txt"
+ls
